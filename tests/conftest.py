@@ -13,7 +13,7 @@ def start_websocket_server():
         async for message in websocket:
             await websocket.send(message)
 
-    server = loop.run_until_complete(serve(websocket_handler, "127.0.0.1", 8000))
+    server = loop.run_until_complete(serve(websocket_handler, "127.0.0.1", 8107))
     yield
     loop.run_until_complete(server.close())
     loop.run_until_complete(server.wait_closed())

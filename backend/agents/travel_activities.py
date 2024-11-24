@@ -30,6 +30,9 @@ from ..data_types import (
 from ..otlp_tracing import logger
 
 
+import os
+logger.info(f"api key: {os.getenv('AZURE_OPENAI_API_KEY')}")
+
 # Retry logic for Bing search with exponential backoff
 @retry(wait=wait_random_exponential(min=1, max=60), stop=stop_after_attempt(6))
 async def _search_custom_bing(session, query_params: dict) -> dict:
@@ -144,6 +147,7 @@ class ActivitiesAgent(RoutedAgent):
         # Ensure the final message content is a string
         assert isinstance(messages[-1].content, str)
 
+        print("above error block")
         # Get structured data from the final message content
         try:
             response_content = await self._model_client.create(

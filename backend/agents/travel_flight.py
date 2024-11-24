@@ -1,6 +1,7 @@
 import random
 from typing import Dict, List
-
+import os
+import json
 from autogen_core.base import MessageContext
 from autogen_core.components import (
     DefaultTopicId,
@@ -20,16 +21,21 @@ from ..data_types import (
     FlightBooking,
     AgentStructuredResponse,
 )
+
+from openai import AzureOpenAI
 from ..otlp_tracing import logger
 
 
 async def simulate_flight_booking(
-    departure_city: str = "New York",
-    destination_city: str = "Paris",
-    departure_date: str = "2023-12-20",
-    return_date: str = "2023-12-30",
-    number_of_passengers: int = 2,
+    flight_params: dict
 ) -> FlightBooking:
+
+    departure_city: str = flight_params["departure_city"]
+    destination_city: str = flight_params["destination_city"]
+    departure_date: str = flight_params["departure_date"]
+    return_date: str = flight_params["return_date"]
+    number_of_passengers: int = flight_params["number_of_passengers"]
+    
     flight_options = [
         {"airline": "Air France", "flight_number": "AF123", "price_per_ticket": 200},
         {"airline": "Delta", "flight_number": "DL456", "price_per_ticket": 250},
@@ -76,9 +82,57 @@ def get_flight_booking_tool() -> List[Tool]:
 # NOTE: There is no LLM in this agent and we are simulating the flight booking process.
 @type_subscription(topic_type="flight_booking")
 class FlightAgent(RoutedAgent):
+
+    _details_extractor = f"""You are simply supposed to extract the proper information from\
+                             the message provided to you as context.
+                            
+                             Example: 
+                             1. message: i want to book a flight from New York to paris from 2023-12-20 to 2023-12-30.
+                                response:     <departure_city : "New York",
+                                              destination_city : "Paris",
+                                              departure_date : "2023-12-20",
+                                              return_date : "2023-12-30",
+                                              number_of_passengers : 2>
+                             Note:
+                             1. If no start or end dates are mentioned in the query, take the dates mentioned in the example.
+                             2. Give your response strictly as a python dictionary with the keys mentioned in the example above.
+                             3. if the number of passesngers is not mentioned in the qquery, take the default as 2.
+                           """
+    
     def __init__(self) -> None:
         super().__init__("FlightAgent")
+        self._openai_client = AzureOpenAI(
+            api_key=os.getenv("AZURE_OPENAI_API_KEY"),  
+            api_version="2024-08-01-preview",
+            azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
+            azure_deployment=os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME")
+        )
 
+    def _get_flight_details(self, message: str):
+        try:
+            logger.info(f"Extracting flight params")
+            response = self._openai_client.chat.completions.create(
+                model = "gpt-4o",
+                messages = [
+                    {
+                        "role" : "system",
+                        "content" : FlightAgent._details_extractor
+                    },
+                    {
+                        "role" : "user",
+                        "content" : message
+                    }
+                ]
+            )
+        
+            response = json.loads(response.choices[0].message.content.replace("\n", "").replace(" ", "").replace("python", "").replace("`", ""))
+            logger.info(f"The extracted flight params are : {response}")
+            return response
+        
+        except:
+            logger.error("Error retrieving flight params")
+
+        
     @message_handler
     async def handle_message(
         self, message: EndUserMessage, ctx: MessageContext
@@ -91,7 +145,11 @@ class FlightAgent(RoutedAgent):
             )
             return
 
-        response = await simulate_flight_booking()
+    
+        flight_params = self._get_flight_details(message.content)
+        
+        response = await simulate_flight_booking(flight_params)
+        
         await self.publish_message(
             AgentStructuredResponse(
                 agent_type=self.id.type,

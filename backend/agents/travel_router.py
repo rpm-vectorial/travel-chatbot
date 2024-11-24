@@ -152,7 +152,7 @@ class SemanticRouterAgent(RoutedAgent):
             system_message = agent_registry.get_planner_prompt(
                 message=message, history=history
             )
-            # logger.info(f"System message: {system_message}")
+            logger.info(f"System message: {system_message}")
         except Exception as e:
             logger.error(e)
 
@@ -161,6 +161,8 @@ class SemanticRouterAgent(RoutedAgent):
                 [SystemMessage(system_message)],
                 extra_create_args={"response_format": TravelPlan},
             )
+
+            logger.info(f"The one before travel plan: {response}")
             my_travel_plan: TravelPlan = TravelPlan.model_validate(
                 json.loads(response.content)
             )

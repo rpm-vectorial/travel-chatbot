@@ -29,7 +29,7 @@ export default function Component() {
 
   useEffect(() => {
     const WEBSOCKET_URL =
-      process.env.NEXT_PUBLIC_WEBSOCKET_URL || "wss://travel-chatbot.grayground-1ee6f428.southeastasia.azurecontainerapps.io/chat";
+      process.env.NEXT_PUBLIC_WEBSOCKET_URL || "ws://127.0.0.1:8002/chat";
     const socket = new WebSocket(WEBSOCKET_URL);
     setWs(socket);
 

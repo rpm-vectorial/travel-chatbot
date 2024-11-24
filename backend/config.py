@@ -12,7 +12,7 @@ from dotenv import load_dotenv
 
 from .otlp_tracing import logger
 
-load_dotenv()
+load_dotenv(override=True)
 
 
 def GetRequiredConfig(name):
@@ -43,9 +43,9 @@ class Config:
     AZURE_CLIENT_ID = GetOptionalConfig("AZURE_CLIENT_ID")
     AZURE_CLIENT_SECRET = GetOptionalConfig("AZURE_CLIENT_SECRET")
 
-    COSMOSDB_ENDPOINT = GetRequiredConfig("COSMOSDB_ENDPOINT")
-    COSMOSDB_DATABASE = GetRequiredConfig("COSMOSDB_DATABASE")
-    COSMOSDB_CONTAINER = GetRequiredConfig("COSMOSDB_CONTAINER")
+    # COSMOSDB_ENDPOINT = GetRequiredConfig("COSMOSDB_ENDPOINT")
+    # COSMOSDB_DATABASE = GetRequiredConfig("COSMOSDB_DATABASE")
+    # COSMOSDB_CONTAINER = GetRequiredConfig("COSMOSDB_CONTAINER")
 
     AZURE_OPENAI_DEPLOYMENT_NAME = GetRequiredConfig("AZURE_OPENAI_DEPLOYMENT_NAME")
     AZURE_OPENAI_API_VERSION = GetRequiredConfig("AZURE_OPENAI_API_VERSION")
@@ -55,8 +55,8 @@ class Config:
     BING_CUSTOM_CONFIG_ID = GetRequiredConfig("BING_CUSTOM_CONFIG_ID")
     BING_CUSTOM_SEARCH_KEY = GetRequiredConfig("BING_CUSTOM_SEARCH_KEY")
 
-    WEB_PUB_SUB_CONNECTION_STRING = GetRequiredConfig("WEB_PUB_SUB_CONN_STRING")
-    WEB_PUB_SUB_HUB_NAME = GetRequiredConfig("WEB_PUB_SUB_HUB_NAME")
+    # WEB_PUB_SUB_CONNECTION_STRING = GetRequiredConfig("WEB_PUB_SUB_CONN_STRING")
+    # WEB_PUB_SUB_HUB_NAME = GetRequiredConfig("WEB_PUB_SUB_HUB_NAME")
 
     DEV_BYPASS_AUTH = GetBoolConfig("DEV_BYPASS_AUTH")
     VISITOR_PASSWORD = GetOrGenerateVisitorPassword()
@@ -114,6 +114,7 @@ class Config:
                 model_capabilities=model_capabilities,
             )
         else:
+            print(f"model name: {Config.AZURE_OPENAI_DEPLOYMENT_NAME}")
             # Fallback behavior to use API key
             Config.__aoai_chatCompletionClient = AzureOpenAIChatCompletionClient(
                 model=Config.AZURE_OPENAI_DEPLOYMENT_NAME,

@@ -56,6 +56,7 @@ class AgentRegistry:
 
         for agent, tool_list in agent_tools.items():
             for tool in tool_list:
+                # logger.info(f"The tools necessary for corresponding agents: {tool}")
                 tools.append(
                     {
                         "agent": agent,
@@ -91,31 +92,31 @@ class AgentRegistry:
 
         agent_descriptions = "\n".join(
             f"""
-    Agent Type: {agent_type}
-    Description: {details['description']}
-    Examples: {details['examples']}
-    {chr(10).join([f"- Function: {func['function']} (Arguments: {', '.join(func['arguments'])})" for func in details['functions']]) if details['functions'] else ""}
-    """
+                Agent Type: {agent_type}
+                Description: {details['description']}
+                Examples: {details['examples']}
+                {chr(10).join([f"- Function: {func['function']} (Arguments: {', '.join(func['arguments'])})" for func in details['functions']]) if details['functions'] else ""}
+            """
             for agent_type, details in agent_details.items()
         )
 
         # logger.info(f"Agent descriptions: {agent_descriptions}")
 
         planner_prompt = """
-    You are an orchestration agent.
-    Your job is to decide which agents to run based on the user's request and the conversation history.
-    Below are the available agents:
+            You are an orchestration agent.
+            Your job is to decide which agents to run based on the user's request and the conversation history.
+            Below are the available agents:
 
-    {agent_descriptions}
+            {agent_descriptions}
 
-    The current user message: {message}
-    Conversation history so far: {history}
+            The current user message: {message}
+            Conversation history so far: {history}
 
-    Your response should only include the selected agent and a brief justification for your choice, without any additional text.
-    """.format(
-            agent_descriptions=agent_descriptions.strip(),
-            message=message.content,
-            history=", ".join(msg.content for msg in history),
-        )
+            Your response should only include the selected agent and a brief justification for your choice, without any additional text.
+            """.format(
+                agent_descriptions=agent_descriptions.strip(),
+                message=message.content,
+                history=", ".join(msg.content for msg in history),
+            )
         # logger.info(f"Planner prompt output: {planner_prompt}")
         return planner_prompt
